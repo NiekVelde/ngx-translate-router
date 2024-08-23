@@ -3,7 +3,7 @@ import { HttpParams } from '@angular/common/http';
 import { Inject, Injectable } from '@angular/core';
 import { NavigationExtras, Params, Route, Routes } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
-import { Observable, Observer } from 'rxjs';
+import { firstValueFrom, Observable, Observer } from 'rxjs';
 import {
     CacheMechanism,
     LocalizeRouterSettings,
@@ -92,7 +92,7 @@ export abstract class LocalizeParser {
         let children: Routes = [];
         /** if set prefix is enforced */
         if (this.settings.alwaysSetPrefix) {
-            const baseRoute = {
+            const baseRoute: Route = {
                 path: '',
                 redirectTo: this.defaultLang,
                 pathMatch: 'full',
@@ -143,8 +143,7 @@ export abstract class LocalizeParser {
         }
 
         /** translate routes */
-        const res = this.translateRoutes(selectedLanguage);
-        return res.toPromise();
+        return firstValueFrom(this.translateRoutes(selectedLanguage));
     }
 
     initChildRoutes(routes: Routes) {
@@ -208,18 +207,20 @@ export abstract class LocalizeParser {
             }
 
             if (!skipRouteLocalization) {
-                if (
-                    route.path !== null &&
-                    route.path !== undefined /* && route.path !== '**'*/
-                ) {
-                    this._translateProperty(route, 'path');
-                }
-                if (route.children) {
-                    this._translateRouteTree(route.children);
-                }
-                if (route.loadChildren && (<any>route)._loadedConfig) {
-                    this._translateRouteTree((<any>route)._loadedConfig.routes);
-                }
+                return;
+            }
+
+            if (
+                route.path !== null &&
+                route.path !== undefined /* && route.path !== '**'*/
+            ) {
+                this._translateProperty(route, 'path');
+            }
+            if (route.children) {
+                this._translateRouteTree(route.children);
+            }
+            if (route.loadChildren && (<any>route)._loadedConfig) {
+                this._translateRouteTree((<any>route)._loadedConfig.routes);
             }
         });
     }
